@@ -1,0 +1,45 @@
+# docker-compose.yml - Orchestrates all services
+
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"  # Direct access if needed
+    depends_on:
+      - db
+      - redis
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: sentiment_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      REDIS_HOST: redis
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: sentiment_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  redis:
+    image: redis:7-alpine
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+
+volumes:
+  postgres_data:
